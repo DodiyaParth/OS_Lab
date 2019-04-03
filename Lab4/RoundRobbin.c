@@ -1,0 +1,165 @@
+#include<stdio.h>
+#include<stdlib.h>
+typedef struct proc{
+    int pid,at,bt,ct,tat,wt,rt;
+}proc;
+proc* pr;
+
+int ttat,twt;
+int n,ind;
+//int* boolA;
+int* queue;
+
+int debug;
+
+void enqueue(int procn)
+{
+	queue[++ind]=procn;
+	if(debug=0)
+		printf("en %d\n",pr[procn].pid );
+}
+
+int dequeue()
+{
+	if(ind==-1)
+		return ind;
+	int r=queue[0];
+	int i;
+	for(i=0;i<ind;i++)
+		queue[i]=queue[i+1];
+	ind--;
+	if(debug=0)
+		printf("deq %d\n",pr[r].pid );
+	return r;
+}
+
+void lol(proc* pre)
+{
+	pre->tat=pre->ct-pre->at;
+	pre->wt=pre->tat-pre->bt;
+	ttat+=pre->tat;
+	twt+=pre->wt;
+}
+
+void arrive(int t)
+{
+	int i;
+	for(i=0;i<n;i++)
+		if(pr[i].at==t)
+			enqueue(i);
+	if(debug=0)
+		printf("      arrive: %d\n",t);
+}
+
+void main()
+{
+	debug=1;
+    int i,j,tq;
+    printf("Enter how many proccess you want to enter,\n");
+    scanf("%d",&n);
+    queue=malloc(4*n);
+    ttat=0;
+    twt=0;
+    int loopc=n;
+    printf("Enter time quantum\n");
+    scanf("%d",&tq);
+    //boolA=malloc(n*4);
+    //for(i=0;i<n;i++)
+    //	boolA[i]=1;
+    ind=-1;
+    pr=malloc(n*sizeof(proc));
+    for(i=0;i<n;i++)
+    {
+        printf("Enter arrival time and burst time for process %d\n",i+1);
+        scanf("%d %d",&pr[i].at,&pr[i].bt);
+        pr[i].rt=pr[i].bt;
+        pr[i].pid=i+1;
+    }
+    for(j=0;j<n;j++)
+    {
+        for(i=0;i<n-1;i++)
+        {
+            if(pr[i].at>pr[i+1].at||(pr[i].at==pr[i+1].at&&pr[i].bt>pr[i+1].bt))
+            {
+                proc temp=pr[i];
+                pr[i]=pr[i+1];
+                pr[i+1]=temp;
+            }
+        }
+    }
+    int t=0;
+    printf("\n");
+    arrive(t);
+    while(loopc>0)
+    {
+    	if(ind==-1)
+    	{
+    		printf("    1: %d - %d : CPU Idle\n",t,t+1);
+    		t++;
+    		arrive(t);
+    	}
+    	else
+    	{
+    		i=dequeue();
+    		if(pr[i].rt<=tq)
+    		{
+    			printf("    2: %d - %d : process %d\n",t,t+pr[i].rt,pr[i].pid);
+    			pr[i].ct=t+pr[i].rt;
+    			for(j=1;j<pr[i].rt;j++)
+    			{
+    				t++;
+    				arrive(t);
+    			}
+    			//pr[i].rt=0;
+    			lol(&pr[i]);
+    			loopc--;
+    			t++;
+    			arrive(t);
+    		}
+    	/*	else if(pr[i].rt==2)
+    		{
+    			printf("    2: %d- %d : process %d\n",t,t+2,pr[i].pid);
+    			pr[i].ct=t+2;
+    			//pr[i].rt=0;
+    			t++;
+    			arrive(t);
+    			t++;
+    			lol(pr[i]);
+    			loopc--;
+    		}*/
+    		else
+    		{
+    			printf("    3: %d - %d : process %d\n",t,t+tq,pr[i].pid);
+    			pr[i].rt-=tq;
+    			
+    			for(j=1;j<tq;j++)
+    			{
+    				t++;
+    				arrive(t);
+    			}
+    			t++;
+    			
+    			arrive(t);
+    			enqueue(i);
+    			
+    		}
+    	}
+    	//arrive(t);
+    }
+    for(j=0;j<n;j++)
+    {
+        for(i=0;i<n-1;i++)
+        {
+            if(pr[i].pid>pr[i+1].pid)
+            {
+                proc t=pr[i];
+                pr[i]=pr[i+1];
+                pr[i+1]=t;
+            }
+        }
+    }
+    printf("\n    AT  Bt  CT  TAT  WT\n");
+    for(i=0;i<n;i++)
+        printf("p%d  %d    %d   %d   %d   %d\n",pr[i].pid,pr[i].at,pr[i].bt,pr[i].ct,pr[i].tat,pr[i].wt);
+    printf("\nAWT=%f  ATAT=%f\n\n",(twt*1.0)/n,(ttat*1.0)/n);
+}
